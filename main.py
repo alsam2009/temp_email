@@ -4,6 +4,8 @@ import string
 import time
 import os
 
+from template import template
+
 API = 'https://www.1secmail.com/api/v1/'
 domain_list = ["1secmail.com", "1secmail.org", "1secmail.net"]
 domain = random.choice(domain_list)
@@ -22,7 +24,7 @@ def check_mail(mail=''):
     length = len(r)
 
     if length == 0:
-        print('[INFO] На почте пока нет новых сообщений. Проверка происходит автоматически каждые 5 секунд!')
+        print('► На почте пока нет новых сообщений. Проверка происходит автоматически каждые 5 секунд!')
     else:
         id_list = []
 
@@ -31,7 +33,7 @@ def check_mail(mail=''):
                 if k == 'id':
                     id_list.append(v)
 
-        print(f'[+] У вас {length} входящих! Почта обновляется автоматически каждые 5 секунд!')
+        print(f'<‼> У вас {length} входящих! Почта обновляется автоматически каждые 5 секунд!')
 
         current_dir = os.getcwd()
         final_dir = os.path.join(current_dir, 'all_mails')
@@ -47,11 +49,18 @@ def check_mail(mail=''):
             subject = r.get('subject')
             date = r.get('date')
             content = r.get('textBody')
+            if content == '':
+                content = r.get('htmlBody')
 
-            mail_file_path = os.path.join(final_dir, f'{i}.txt')
+                body_htm = template(sender, mail, subject, date, content)
+                mail_file_path = os.path.join(final_dir, f'{i}.htm')
 
-            with open(mail_file_path, 'w') as file:
-                file.write(f'Sender: {sender}\nTo: {mail}\nSubject: {subject}\nDate: {date}\nContent: {content}')
+                with open(mail_file_path, 'w', encoding='utf-8') as file:
+                    file.write(body_htm)
+            else:
+                mail_file_path = os.path.join(final_dir, f'{i}.txt')
+                with open(mail_file_path, 'w', encoding='utf-8') as file:
+                    file.write(f'Sender: {sender}\nTo: {mail}\nSubject: {subject}\nDate: {date}\nContent: {content}')
 
 def delete_mail(mail=''):
     url = 'https://www.1secmail.com/mailbox'
@@ -63,14 +72,14 @@ def delete_mail(mail=''):
     }
 
     r = requests.post(url, data=data)
-    print(f'[X] Почтовый адрес {mail} - удален!\n')
+    print(f'<x> Почтовый адрес {mail} - удален!\n')
 
 
 def main():
     try:
         username = generate_username()
         mail = f'{username}@{domain}'
-        print(f'[+] Ваш почтовый адрес: {mail}')
+        print(f'<+> Ваш почтовый адрес: {mail}')
 
         mail_req = requests.get(f'{API}?login={mail.split("@")[0]}&domain={mail.split("@")[1]}')
 
@@ -80,8 +89,11 @@ def main():
 
     except(KeyboardInterrupt):
         delete_mail(mail=mail)
-        print('Программа прервана!')
+        print('<!> Программа прервана!')
 
 
 if __name__ == '__main__':
+    welcom = " *** TEMPORARY MAIL *** "
+    print(f'\n{welcom}\n{"_"*len(welcom)}')
+    print('https://github.com/alsam2009\n')
     main()
